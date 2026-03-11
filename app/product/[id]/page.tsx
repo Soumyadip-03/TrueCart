@@ -9,9 +9,11 @@ import { FakeReviewSection } from '@/components/fake-review-section'
 import { AISummaryCard } from '@/components/ai-summary-card'
 import { ChromeExtensionPanel } from '@/components/chrome-extension-panel'
 import { PersonalizedInsights } from '@/components/personalized-insights'
+import { PriceComparisonCard } from '@/components/price-comparison-card'
 import { ArrowLeft, Star, ExternalLink, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
+import { extractPlatformInfo, calculatePriceComparison } from '@/lib/price-comparison'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
@@ -134,6 +136,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
             </div>
           </div>
+
+          {/* Price Comparison */}
+          {(() => {
+            const platforms = extractPlatformInfo(product)
+            if (platforms.length > 0) {
+              const comparison = calculatePriceComparison(platforms)
+              return <PriceComparisonCard comparison={comparison} className="mb-8" />
+            }
+            return null
+          })()}
 
           {/* AI Summary */}
           <AISummaryCard summary={product.aiSummary} className="mb-8" />

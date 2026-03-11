@@ -11,12 +11,21 @@ interface ProductCardProps {
   className?: string
 }
 
+// Generate unique image URL using DiceBear API
+function getProductImageUrl(productId: string): string {
+  // DiceBear provides reliable, fast avatar/image generation
+  const seed = productId.replace(/[^a-zA-Z0-9]/g, '')
+  return `https://api.dicebear.com/7.x/shapes/svg?seed=${seed}&scale=80&backgroundColor=random&size=400`
+}
+
 export function ProductCard({ product, className }: ProductCardProps) {
   const trustColor = product.trustScore >= 90 
     ? 'bg-success text-success-foreground' 
     : product.trustScore >= 75 
     ? 'bg-warning text-warning-foreground' 
     : 'bg-destructive text-destructive-foreground'
+
+  const imageUrl = getProductImageUrl(product.id)
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -25,13 +34,17 @@ export function ProductCard({ product, className }: ProductCardProps) {
         className
       )}>
         <CardContent className="p-0">
-          <div className="relative aspect-square overflow-hidden bg-secondary/50">
+          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-secondary/50">
             <Image
-              src={product.image}
+              src={imageUrl}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={false}
+              unoptimized
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="absolute right-3 top-3">
               <Badge className={cn('gap-1 font-semibold', trustColor)}>
                 <Shield className="h-3 w-3" />
@@ -40,7 +53,10 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </div>
           </div>
           <div className="p-4">
-            <p className="text-xs text-muted-foreground">{product.brand}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground font-medium">{product.brand}</p>
+              <p className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded">{product.category}</p>
+            </div>
             <h3 className="mt-1 font-semibold text-foreground line-clamp-2 text-balance">
               {product.name}
             </h3>

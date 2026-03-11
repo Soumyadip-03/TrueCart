@@ -11,16 +11,43 @@ function extractProductFromUrl(url: string): string | null {
     const pathname = urlObj.pathname.toLowerCase()
     
     // Extract from common e-commerce patterns
-    // Amazon: /dp/ASIN or /s?k=product-name
-    // eBay: /itm/product-name
-    // Generic: last path segment or query parameter
-    
     const pathSegments = pathname.split('/').filter(s => s)
     
+    // For Flipkart URLs like /product-name/p/PRODUCT_ID
+    // We need to get the segment BEFORE /p/
     if (pathSegments.length > 0) {
-      const lastSegment = pathSegments[pathSegments.length - 1]
-      if (lastSegment && lastSegment !== 'dp' && lastSegment !== 'itm') {
-        return decodeURIComponent(lastSegment).replace(/[-_]/g, ' ')
+      let productSegment = null
+      
+      // Find the segment before /p/ (Flipkart pattern)
+      const pIndex = pathSegments.indexOf('p')
+      if (pIndex > 0) {
+        productSegment = pathSegments[pIndex - 1]
+      } else {
+        // Otherwise get the last meaningful segment
+        const lastSegment = pathSegments[pathSegments.length - 1]
+        if (lastSegment && lastSegment !== 'dp' && lastSegment !== 'itm' && lastSegment !== 'p' && !lastSegment.startsWith('itm')) {
+          productSegment = lastSegment
+        }
+      }
+      
+      if (productSegment) {
+        let productName = decodeURIComponent(productSegment).replace(/[-_]/g, ' ')
+        
+        // Clean up the product name - remove extra specs and keep only product name
+        productName = productName
+          .replace(/\d+\s*-?\s*\d+\s*ghz/gi, '') // Remove GHz specs
+          .replace(/lga\s*-?\s*\d+/gi, '') // Remove LGA specs
+          .replace(/\d+\s*-?core\s*processor/gi, '') // Remove core processor specs
+          .replace(/designed\s*mobile/gi, '') // Remove "designed mobile"
+          .replace(/magsafe\s*case/gi, '') // Remove case info
+          .replace(/usb\s*-?c/gi, '') // Remove USB-C
+          .replace(/white|black|blue|red|green|silver|gold|pink|purple/gi, '') // Remove colors
+          .replace(/\s+/g, ' ') // Clean up multiple spaces
+          .trim()
+        
+        if (productName && productName.length > 2) {
+          return productName
+        }
       }
     }
     
@@ -55,12 +82,23 @@ function findMatchingProduct(productName: string): Product | null {
   
   if (exactMatch) return exactMatch
   
-  // Partial match
-  const partialMatches = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm) ||
-    p.brand.toLowerCase().includes(searchTerm) ||
-    searchTerm.includes(p.name.toLowerCase())
-  )
+  // Partial match with better scoring
+  const partialMatches = products.filter(p => {
+    const productNameLower = p.name.toLowerCase()
+    const brandLower = p.brand.toLowerCase()
+    
+    // Check if search term contains product name or brand
+    return (
+      productNameLower.includes(searchTerm) ||
+      searchTerm.includes(productNameLower) ||
+      brandLower.includes(searchTerm) ||
+      searchTerm.includes(brandLower) ||
+      // Check for key words match
+      searchTerm.split(' ').some(word => 
+        word.length > 3 && (productNameLower.includes(word) || brandLower.includes(word))
+      )
+    )
+  })
   
   if (partialMatches.length > 0) {
     // Return highest trust score match
