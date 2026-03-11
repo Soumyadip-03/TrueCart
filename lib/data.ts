@@ -1,17 +1,17 @@
 // ============================================
 // MOCK DATABASE
 // In production, this would be replaced with actual database queries
-// Products data is loaded from /data/products.json
+// Products data is loaded from /data/categories/*.json files
 // ============================================
 
 import type { Product, FeatureInsight, FakeReviewAnalysis } from './types'
-import productsData from '@/data/products.json'
+import { loadAllProducts, extractCategories } from './load-products'
 
 // Re-export types for backward compatibility
 export type { Product, FeatureInsight, FakeReviewAnalysis }
 
-// Load products from external dataset
-export const products: Product[] = productsData.products as Product[]
+// Load products from all category files
+export const products: Product[] = loadAllProducts()
 
-// Load categories from external dataset
-export const categories: string[] = productsData.categories
+// Extract categories from products
+export const categories: string[] = extractCategories(products)
