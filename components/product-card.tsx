@@ -11,13 +11,6 @@ interface ProductCardProps {
   className?: string
 }
 
-// Generate unique image URL using DiceBear API
-function getProductImageUrl(productId: string): string {
-  // DiceBear provides reliable, fast avatar/image generation
-  const seed = productId.replace(/[^a-zA-Z0-9]/g, '')
-  return `https://api.dicebear.com/7.x/shapes/svg?seed=${seed}&scale=80&backgroundColor=random&size=400`
-}
-
 export function ProductCard({ product, className }: ProductCardProps) {
   const trustColor = product.trustScore >= 90 
     ? 'bg-success text-success-foreground' 
@@ -25,7 +18,22 @@ export function ProductCard({ product, className }: ProductCardProps) {
     ? 'bg-warning text-warning-foreground' 
     : 'bg-destructive text-destructive-foreground'
 
-  const imageUrl = getProductImageUrl(product.id)
+  // Use a simple color-based background
+  const colors = [
+    'from-red-400 to-red-600',
+    'from-blue-400 to-blue-600',
+    'from-green-400 to-green-600',
+    'from-purple-400 to-purple-600',
+    'from-pink-400 to-pink-600',
+    'from-yellow-400 to-yellow-600',
+    'from-indigo-400 to-indigo-600',
+    'from-cyan-400 to-cyan-600',
+    'from-orange-400 to-orange-600',
+    'from-teal-400 to-teal-600',
+  ]
+  
+  const colorIndex = product.id.charCodeAt(0) % colors.length
+  const gradientClass = colors[colorIndex]
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -34,16 +42,18 @@ export function ProductCard({ product, className }: ProductCardProps) {
         className
       )}>
         <CardContent className="p-0">
-          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-secondary to-secondary/50">
-            <Image
-              src={imageUrl}
-              alt={product.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={false}
-              unoptimized
-            />
+          <div className={cn(
+            'relative aspect-square overflow-hidden bg-gradient-to-br flex items-center justify-center',
+            gradientClass
+          )}>
+            <div className="text-center text-white">
+              <div className="text-5xl font-bold opacity-20 mb-2">
+                {product.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="text-sm font-semibold opacity-70">
+                {product.category}
+              </div>
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="absolute right-3 top-3">
               <Badge className={cn('gap-1 font-semibold', trustColor)}>

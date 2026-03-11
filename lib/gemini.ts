@@ -1,12 +1,19 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
 
-if (!apiKey) {
-  throw new Error('NEXT_PUBLIC_GEMINI_API_KEY environment variable is not set')
+let genAI: GoogleGenerativeAI | null = null
+
+if (apiKey) {
+  genAI = new GoogleGenerativeAI(apiKey)
 }
 
-const genAI = new GoogleGenerativeAI(apiKey)
+function getGenAI(): GoogleGenerativeAI {
+  if (!genAI || !apiKey) {
+    throw new Error('NEXT_PUBLIC_GEMINI_API_KEY environment variable is not set')
+  }
+  return genAI
+}
 
 /**
  * Generate AI summary for a product based on reviews
@@ -15,6 +22,7 @@ export async function generateProductSummary(
   productName: string,
   reviews: string[]
 ): Promise<string> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a product analysis expert. Based on the following customer reviews for "${productName}", generate a concise and helpful summary (2-3 sentences) that captures the overall sentiment and key points.
@@ -36,6 +44,7 @@ export async function extractPros(
   productName: string,
   reviews: string[]
 ): Promise<string[]> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a product analysis expert. Based on the following customer reviews for "${productName}", extract the top 5 positive aspects (pros) that customers appreciate.
@@ -67,6 +76,7 @@ export async function extractCons(
   productName: string,
   reviews: string[]
 ): Promise<string[]> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a product analysis expert. Based on the following customer reviews for "${productName}", extract the top 5 negative aspects (cons) that customers mention.
@@ -95,6 +105,7 @@ Return ONLY a JSON array of strings with the cons, nothing else. Example: ["Con 
  * Analyze sentiment of reviews
  */
 export async function analyzeSentiment(reviews: string[]): Promise<number> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a sentiment analysis expert. Analyze the following customer reviews and provide an overall sentiment score from 0-100, where 0 is extremely negative and 100 is extremely positive.
@@ -122,6 +133,7 @@ Return ONLY a single number between 0-100, nothing else.`
 export async function detectFakeReviews(
   reviews: string[]
 ): Promise<{ trustPercentage: number; suspiciousCount: number }> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a fake review detection expert. Analyze the following reviews and identify suspicious patterns that might indicate fake reviews (e.g., overly promotional language, generic praise, repetitive patterns, etc.).
@@ -159,6 +171,7 @@ export async function generateFeatureInsights(
   productName: string,
   reviews: string[]
 ): Promise<Array<{ name: string; sentiment: 'positive' | 'neutral' | 'negative'; score: number; insight: string }>> {
+  const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
 
   const prompt = `You are a product analysis expert. Based on the following reviews for "${productName}", identify 3-5 key features/aspects and analyze customer sentiment for each.
